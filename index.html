@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Knight's Tour Board</title>
+    <style>
+        .board {
+            display: grid;
+            gap: 2px;
+            padding: 10px;
+            background-color: #333;
+            width: fit-content;
+        }
+
+        .tile {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            background-color: #fff;
+            color: #000;
+        }
+
+        .tile:hover {
+            background-color: #eee;
+        }
+
+        .controls {
+            margin: 20px 0;
+        }
+
+        button {
+            margin: 0 5px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+
+        .marked {
+            background-color: #e6e6e6;
+        }
+
+        .tree-container {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ccc;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .tree-node {
+            margin: 10px 0;
+            padding: 10px;
+            border: 1px solid #ddd;
+            background-color: #f9f9f9;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .tree-node:hover {
+            background-color: #f0f0f0;
+        }
+
+        .tree-node.selected {
+            border-color: #666;
+            background-color: #e0e0e0;
+        }
+
+        .board-state {
+            display: grid;
+            gap: 1px;
+            padding: 5px;
+            background-color: #333;
+            width: fit-content;
+            margin: 10px 0;
+        }
+
+        .state-tile {
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            background-color: #fff;
+        }
+
+        .delete-state {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background: #ff4444;
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 2px 6px;
+            cursor: pointer;
+        }
+
+        .delete-state:hover {
+            background: #cc0000;
+        }
+
+        .filter-section {
+            margin: 10px 0;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+
+        .filter-section input {
+            width: 60px;
+            margin: 0 5px;
+        }
+
+        .no-states-message {
+            color: #666;
+            font-style: italic;
+            padding: 10px;
+        }
+
+        .tile.marked {
+            color: white;
+        }
+
+        .state-tile.marked {
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="controls">
+        <label for="boardSize">Board Size:</label>
+        <input type="number" id="boardSize" min="3" max="12" value="8">
+        <button onclick="createBoard()">Create Board</button>
+        <button onclick="undoMove()">Undo</button>
+        <button onclick="saveState()">Save State</button>
+        <button onclick="clearAllStates()">Clear All States</button>
+    </div>
+    <div style="display: flex; gap: 20px;">
+        <div id="board" class="board"></div>
+        <div class="tree-container">
+            <h3>State Tree</h3>
+            <div class="filter-section">
+                Moves: 
+                <input type="number" id="minMoves" placeholder="Min" min="1" onchange="filterStates()">
+                to
+                <input type="number" id="maxMoves" placeholder="Max" min="1" onchange="filterStates()">
+                <button onclick="clearFilters()">Clear Filters</button>
+            </div>
+            <div id="stateTree"></div>
+        </div>
+    </div>
+
+    <script>
+        let currentMove = 1;
+        let boardSize = 8;
+        let moveHistory = [];
+        let states = [];
+
+        // Load saved data from localStorage
+        function loadSavedData() {
+            const savedStates = localStorage.getItem('knightsTourStates');
+            const savedBoardSize = localStorage.getItem('knightsTourBoardSize');
+            const savedMinMoves = localStorage.getItem('knightsTourMinMoves');
+            const savedMaxMoves = localStorage.getItem('knightsTourMaxMoves');
+
+            if (savedStates) {
+                states = JSON.parse(savedStates);
+                updateStateTree();
+            }
+
+            if (savedBoardSize) {
+                boardSize = parseInt(savedBoardSize);
+                document.getElementById('boardSize').value = boardSize;
+            }
+
+            if (savedMinMoves) {
+                document.getElementById('minMoves').value = savedMinMoves;
+            }
+
+            if (savedMaxMoves) {
+                document.getElementById('maxMoves').value = savedMaxMoves;
+            }
+        }
+
+        // Save data to localStorage
+        function saveToLocalStorage() {
+            localStorage.setItem('knightsTourStates', JSON.stringify(states));
+            localStorage.setItem('knightsTourBoardSize', boardSize);
+            
+            const minMoves = document.getElementById('minMoves').value;
+            const maxMoves = document.getElementById('maxMoves').value;
+            
+            if (minMoves) localStorage.setItem('knightsTourMinMoves', minMoves);
+            if (maxMoves) localStorage.setItem('knightsTourMaxMoves', maxMoves);
+        }
+
+        function createBoard() {
+            currentMove = 1;
+            boardSize = parseInt(document.getElementById('boardSize').value);
+            const board = document.getElementById('board');
+            board.style.gridTemplateColumns = `repeat(${boardSize}, 60px)`;
+            board.innerHTML = '';
+
+            for (let i = 0; i < boardSize * boardSize; i++) {
+                const tile = document.createElement('div');
+                tile.className = 'tile';
+                tile.addEventListener('click', () => handleTileClick(tile));
+                board.appendChild(tile);
+            }
+            
+            saveToLocalStorage();
+        }
+
+        function getColorForMove(moveNumber, maxMoves) {
+            // Calculate color intensity based on move number
+            const intensity = Math.floor((moveNumber / maxMoves) * 100);
+            return `hsl(210, 100%, ${Math.max(20, 80 - intensity)}%)`;
+        }
+
+        function handleTileClick(tile) {
+            if (!tile.textContent) {
+                tile.textContent = currentMove;
+                tile.classList.add('marked');
+                const maxMoves = boardSize * boardSize;
+                tile.style.backgroundColor = getColorForMove(currentMove, maxMoves);
+                moveHistory.push(tile);
+                currentMove++;
+            } else if (parseInt(tile.textContent) === currentMove - 1) {
+                undoMove();
+            }
+        }
+
+        function undoMove() {
+            if (moveHistory.length > 0) {
+                const lastTile = moveHistory.pop();
+                lastTile.textContent = '';
+                lastTile.classList.remove('marked');
+                lastTile.style.backgroundColor = '#fff';
+                currentMove--;
+            }
+        }
+
+        function saveState() {
+            const tiles = Array.from(document.querySelectorAll('.tile'));
+            const state = {
+                moves: tiles.map(tile => tile.textContent || ''),
+                currentMove: currentMove,
+                moveHistory: [...moveHistory],
+                timestamp: new Date().toLocaleTimeString()
+            };
+            states.push(state);
+            updateStateTree();
+            saveToLocalStorage();
+        }
+
+        function updateStateTree() {
+            const treeContainer = document.getElementById('stateTree');
+            treeContainer.innerHTML = '';
+
+            const minMoves = parseInt(document.getElementById('minMoves').value) || 0;
+            const maxMoves = parseInt(document.getElementById('maxMoves').value) || Infinity;
+
+            const filteredStates = states.filter(state => {
+                const moveCount = state.currentMove - 1;
+                return moveCount >= minMoves && moveCount <= maxMoves;
+            });
+
+            if (filteredStates.length === 0) {
+                treeContainer.innerHTML = '<div class="no-states-message">No states match the current filters</div>';
+                return;
+            }
+
+            filteredStates.forEach((state, index) => {
+                const node = document.createElement('div');
+                node.className = 'tree-node';
+                
+                const miniBoard = createMiniBoard(state.moves);
+                
+                node.innerHTML = `
+                    <button class="delete-state" onclick="event.stopPropagation(); deleteState(${states.indexOf(state)})">×</button>
+                    <div>State ${states.indexOf(state) + 1} (${state.timestamp})</div>
+                    <div>Moves: ${state.currentMove - 1}</div>
+                    ${miniBoard.outerHTML}
+                `;
+                
+                node.onclick = () => loadState(state);
+                treeContainer.appendChild(node);
+            });
+        }
+
+        function createMiniBoard(moves) {
+            const board = document.createElement('div');
+            board.className = 'board-state';
+            board.style.gridTemplateColumns = `repeat(${boardSize}, 20px)`;
+            const maxMoves = boardSize * boardSize;
+
+            moves.forEach(move => {
+                const tile = document.createElement('div');
+                tile.className = 'state-tile';
+                if (move) {
+                    tile.classList.add('marked');
+                    tile.style.backgroundColor = getColorForMove(parseInt(move), maxMoves);
+                }
+                tile.textContent = move;
+                board.appendChild(tile);
+            });
+
+            return board;
+        }
+
+        function loadState(state) {
+            const tiles = document.querySelectorAll('.tile');
+            const maxMoves = boardSize * boardSize;
+            tiles.forEach((tile, index) => {
+                tile.textContent = state.moves[index];
+                if (state.moves[index]) {
+                    tile.classList.add('marked');
+                    tile.style.backgroundColor = getColorForMove(parseInt(state.moves[index]), maxMoves);
+                } else {
+                    tile.classList.remove('marked');
+                    tile.style.backgroundColor = '#fff';
+                }
+            });
+            currentMove = state.currentMove;
+            moveHistory = [...state.moveHistory];
+        }
+
+        function deleteState(index) {
+            states.splice(index, 1);
+            updateStateTree();
+            saveToLocalStorage();
+        }
+
+        function clearAllStates() {
+            if (confirm('Are you sure you want to delete all saved states?')) {
+                states = [];
+                updateStateTree();
+                saveToLocalStorage();
+            }
+        }
+
+        function filterStates() {
+            updateStateTree();
+            saveToLocalStorage();
+        }
+
+        function clearFilters() {
+            document.getElementById('minMoves').value = '';
+            document.getElementById('maxMoves').value = '';
+            localStorage.removeItem('knightsTourMinMoves');
+            localStorage.removeItem('knightsTourMaxMoves');
+            updateStateTree();
+        }
+
+        // Load saved data and create initial board when page loads
+        loadSavedData();
+        createBoard();
+    </script>
+</body>
+</html> 
