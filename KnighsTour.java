@@ -24,8 +24,27 @@ public class KnighsTour {
     }
 
     public void general_search(String search_method) {
+        List<int[]> path = new ArrayList<>();
+        path.add(new int[]{0,0});
         switch(search_method) {
             case "bfs":
+            Queue<List<int[]>> frontier = new LinkedList<>(); 
+            frontier.add(path);
+            
+            while(!frontier.isEmpty()) {
+                List<int[]> current = frontier.poll();
+
+                // Yolun son elemanını al
+                int[] lastMove = current.get(current.size() - 1);
+
+                // x ve y koordinatlarını al
+                int x = lastMove[0];
+                int y = lastMove[1];
+
+                frontier.add(x,y,board,search_method);
+
+                    
+                }
                 break;
             case "dfs":
                 break;
@@ -35,7 +54,6 @@ public class KnighsTour {
                 break;
         }
     }
-
     private int[] move_selector(int x, int y, int[][] board, String search_method) {
         //[x1, y1], [x2, y2], ...
         ArrayList<int[]> nodes = new ArrayList<>();
@@ -81,16 +99,7 @@ public class KnighsTour {
             case "h2":
                 break;
         }
+        return null;
 
     }
-
-    
-
-
-
-    
-
-
-
-
 }
