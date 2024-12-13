@@ -129,6 +129,14 @@
         .state-tile.marked {
             color: white;
         }
+
+        .possible-move {
+            background-color: #e9c02c !important;
+        }
+
+        .possible-move:hover {
+            background-color: #dfa40f !important;
+        }
     </style>
 </head>
 <body>
@@ -214,6 +222,7 @@
             }
             
             saveToLocalStorage();
+            highlightPossibleMoves();
         }
 
         function getColorForMove(moveNumber, maxMoves) {
@@ -222,14 +231,71 @@
             return `hsl(210, 100%, ${Math.max(20, 80 - intensity)}%)`;
         }
 
+        function isValidKnightMove(fromRow, fromCol, toRow, toCol) {
+            const rowDiff = Math.abs(fromRow - toRow);
+            const colDiff = Math.abs(fromCol - toCol);
+            return (rowDiff === 2 && colDiff === 1) || (rowDiff === 1 && colDiff === 2);
+        }
+
+        function getPosition(tile) {
+            const tiles = Array.from(document.querySelectorAll('.tile'));
+            const index = tiles.indexOf(tile);
+            return {
+                row: Math.floor(index / boardSize),
+                col: index % boardSize
+            };
+        }
+
+        function getTileAt(row, col) {
+            if (row < 0 || row >= boardSize || col < 0 || col >= boardSize) return null;
+            const tiles = Array.from(document.querySelectorAll('.tile'));
+            return tiles[row * boardSize + col];
+        }
+
+        function highlightPossibleMoves(currentTile = null) {
+            const tiles = document.querySelectorAll('.tile');
+            tiles.forEach(tile => tile.classList.remove('possible-move'));
+
+            if (moveHistory.length === 0 && !currentTile) {
+                // First move - all tiles are valid
+                tiles.forEach(tile => tile.classList.add('possible-move'));
+                return;
+            }
+
+            const lastMove = currentTile || moveHistory[moveHistory.length - 1];
+            const {row: lastRow, col: lastCol} = getPosition(lastMove);
+
+            // Knight's possible moves
+            const moves = [
+                [-2, -1], [-2, 1], [-1, -2], [-1, 2],
+                [1, -2], [1, 2], [2, -1], [2, 1]
+            ];
+
+            moves.forEach(([rowDiff, colDiff]) => {
+                const newRow = lastRow + rowDiff;
+                const newCol = lastCol + colDiff;
+                const tile = getTileAt(newRow, newCol);
+                
+                if (tile && !tile.textContent) {
+                    tile.classList.add('possible-move');
+                }
+            });
+        }
+
         function handleTileClick(tile) {
             if (!tile.textContent) {
-                tile.textContent = currentMove;
-                tile.classList.add('marked');
-                const maxMoves = boardSize * boardSize;
-                tile.style.backgroundColor = getColorForMove(currentMove, maxMoves);
-                moveHistory.push(tile);
-                currentMove++;
+                const isFirstMove = moveHistory.length === 0;
+                const lastTile = moveHistory[moveHistory.length - 1];
+                
+                if (isFirstMove || tile.classList.contains('possible-move')) {
+                    tile.textContent = currentMove;
+                    tile.classList.add('marked');
+                    const maxMoves = boardSize * boardSize;
+                    tile.style.backgroundColor = getColorForMove(currentMove, maxMoves);
+                    moveHistory.push(tile);
+                    currentMove++;
+                    highlightPossibleMoves();
+                }
             } else if (parseInt(tile.textContent) === currentMove - 1) {
                 undoMove();
             }
@@ -242,6 +308,7 @@
                 lastTile.classList.remove('marked');
                 lastTile.style.backgroundColor = '#fff';
                 currentMove--;
+                highlightPossibleMoves();
             }
         }
 
@@ -328,6 +395,7 @@
             });
             currentMove = state.currentMove;
             moveHistory = [...state.moveHistory];
+            highlightPossibleMoves();
         }
 
         function deleteState(index) {

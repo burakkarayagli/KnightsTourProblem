@@ -152,7 +152,7 @@ public class KnightsTour {
                         possible_move_counts.add(new int[]{new_x, new_y, possible_move_count, distance_to_corner});
                     }
                 }
-                Collections.sort(possible_move_counts, (a, b) -> Integer.compare(a[2], b[2]));
+                Collections.sort(possible_move_counts, (a, b) -> Integer.compare(a[2], b[2]));//TODO: Sort by distance to corner
                 for (int[] move_pair : possible_move_counts) {
                     int[][] new_board = deep_copy(board);
                     new_board[move_pair[0]][move_pair[1]] = move + 1;
