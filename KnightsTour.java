@@ -67,7 +67,7 @@ public class KnightsTour {
         }
     }
 
-
+    //Nodes to be added to the frontier
     private ArrayList<Node> move_selector(Node node, String search_method) {
         int x = node.x;
         int y = node.y;
@@ -76,6 +76,7 @@ public class KnightsTour {
 
         ArrayList<Node> nodes = new ArrayList<>();
         switch(search_method) {
+            //If BFS, add all the nodes to the frontier
             case "bfs":
                 for (int i = 0; i < 8; i++) {
                     int new_x = x + move_x[i];
@@ -88,6 +89,7 @@ public class KnightsTour {
                     }
                 }
                 break;
+            //If DFS, add all the nodes to the frontier
             case "dfs":
                 for (int i = 0; i < 8; i++) {
                     int new_x = x + move_x[i];
@@ -100,6 +102,7 @@ public class KnightsTour {
                     }
                 }
                 break;
+            //If h1b sort by the number of possible moves ascending
             case "h1b": //Visit square with least number of moves
                 //[x, y, possible_move_count]
                 ArrayList<int[]> possible_move_counts = new ArrayList<>();
@@ -152,7 +155,14 @@ public class KnightsTour {
                         possible_move_counts.add(new int[]{new_x, new_y, possible_move_count, distance_to_corner});
                     }
                 }
-                Collections.sort(possible_move_counts, (a, b) -> Integer.compare(a[2], b[2]));//TODO: Sort by distance to corner
+                Collections.sort(possible_move_counts, (a, b) -> {
+                    // Compare by number of possible moves
+                    if (a[2] != b[2]) {
+                        return Integer.compare(a[2], b[2]); // Ascending order
+                    }
+                    // In case of a tie, compare by distance to the corner
+                    return Integer.compare(a[3], b[3]); // Ascending order
+                });
                 for (int[] move_pair : possible_move_counts) {
                     int[][] new_board = deep_copy(board);
                     new_board[move_pair[0]][move_pair[1]] = move + 1;
@@ -164,14 +174,12 @@ public class KnightsTour {
         return nodes;
     }
 
-    public int[][] deep_copy(int[][] board) {
-        int[][] new_board = new int[size][size];
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                new_board[i][j] = board[i][j];
-            }
+    private int[][] deep_copy(int[][] original) {
+        int[][] copy = new int[original.length][];
+        for (int i = 0; i < original.length; i++) {
+            copy[i] = original[i].clone();
         }
-        return new_board;
+        return copy;
     }
     
     //Calculate the minimum distance to the corner with the manhattan distance
@@ -184,7 +192,7 @@ public class KnightsTour {
     }
 
     public static void main(String[] args) {
-        KnightsTour knights_tour = new KnightsTour(71, "h1b", 60);
+        KnightsTour knights_tour = new KnightsTour(136, "h1b", 60);
         knights_tour.general_search();
     }
 
