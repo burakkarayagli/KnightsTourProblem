@@ -1,3 +1,6 @@
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.*;
 
 public class KnightsTour {
@@ -31,20 +34,25 @@ public class KnightsTour {
         frontier.add(new Node(0, 0, board, 1));
         boolean isBFS = search_method.equals("bfs");
         long time_taken = 0;
+        //Run the search until the solution is found or the time limit is reached
         while (!frontier.isEmpty() && System.currentTimeMillis() - startTime < time_limit) {
             time_taken = (long) (System.currentTimeMillis() - startTime);
             if (time_taken % 1000 == 0) {
                 System.out.println("Time taken: " + time_taken / 1000.0 + " seconds");
             }
             Node current_node = frontier.remove(0);
+            //If the solution is found, print the board and create the path
             if (current_node.move == size * size) {
                 solution_found = true;
+                create_path(current_node.board, size, "path.txt");
                 print_board(current_node.board);
                 break;
             }
+            //If BFS, add all the nodes to the end of the frontier
             if (isBFS) {
                 frontier.addAll(move_selector(current_node, search_method));
             } else {
+                //If DFS, add all the nodes to the beginning of the frontier
                 frontier.addAll(0, move_selector(current_node, search_method));
             }
         }
@@ -191,9 +199,27 @@ public class KnightsTour {
         return Math.min(Math.min(min_distance_to_upper_left, min_distance_to_upper_right), Math.min(min_distance_to_lower_left, min_distance_to_lower_right));
     }
 
+    private void create_path(int board[][], int size, String path_file) {
+        int [][] path = new int[size*size][2];
+        for (int i = 0; i < size; i++) {
+            for (int j = 0; j < size; j++) {
+                path[board[i][j]-1][0] = i;
+                path[board[i][j]-1][1] = j;
+            }
+        }
+        try (PrintWriter writer = new PrintWriter(new FileWriter(path_file))) {
+            for (int[] move_pair : path) {
+                writer.println(move_pair[0] + "," + move_pair[1]);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     public static void main(String[] args) {
-        KnightsTour knights_tour = new KnightsTour(136, "h1b", 60);
+        KnightsTour knights_tour = new KnightsTour(8, "h1b", 60);
         knights_tour.general_search();
+
     }
 
 }
