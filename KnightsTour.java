@@ -46,7 +46,6 @@ public class KnightsTour {
             if (current_node.move == size * size) {
                 solution_found = true;
                 create_path(current_node.board, size, "path.txt");
-                print_board(current_node.board);
                 create_board_file(current_node.board, size, "board.txt");
                 break;
             }
@@ -245,7 +244,7 @@ public class KnightsTour {
         System.out.print("Enter the search method (a,b,c,d): ");
         String search_method = scanner.next();
         System.out.print("Enter the time limit in seconds: ");
-        int time_limit = 900;
+        int time_limit = scanner.nextInt();
         scanner.close();
         if (search_method.equals("a")) {
             search_method = "bfs";
