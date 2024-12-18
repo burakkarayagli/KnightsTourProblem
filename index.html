@@ -147,6 +147,8 @@
         <button onclick="undoMove()">Undo</button>
         <button onclick="saveState()">Save State</button>
         <button onclick="clearAllStates()">Clear All States</button>
+        
+        <input type="file" id="pathFile" accept=".txt" onchange="handleFileUpload(event)">
     </div>
     <div style="display: flex; gap: 20px;">
         <div id="board" class="board"></div>
@@ -423,6 +425,56 @@
             localStorage.removeItem('knightsTourMinMoves');
             localStorage.removeItem('knightsTourMaxMoves');
             updateStateTree();
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const content = e.target.result;
+                processPathFile(content);
+            };
+            reader.readAsText(file);
+        }
+
+        function processPathFile(content) {
+            // Reset the board
+            moveHistory = [];
+            currentMove = 1;
+
+            // Parse the coordinates
+            const coordinates = content.trim().split('\n').map(line => {
+                const [x, y] = line.split(',').map(Number);
+                return { x, y };
+            });
+
+            // Find the board size
+            const maxX = Math.max(...coordinates.map(coord => coord.x));
+            const maxY = Math.max(...coordinates.map(coord => coord.y));
+            boardSize = Math.max(maxX, maxY) + 1;
+
+            // Update board size input and create new board
+            document.getElementById('boardSize').value = boardSize;
+            createBoard();
+
+            // Fill the path
+            const tiles = document.querySelectorAll('.tile');
+            coordinates.forEach((coord, index) => {
+                // Convert coordinates to start from lower left
+                const tileIndex = coord.x + ((boardSize - 1 - coord.y) * boardSize);
+                const tile = tiles[tileIndex];
+                if (tile) {
+                    tile.textContent = index + 1;
+                    tile.classList.add('marked');
+                    tile.style.backgroundColor = getColorForMove(index + 1, coordinates.length);
+                    moveHistory.push(tile);
+                }
+            });
+
+            currentMove = coordinates.length + 1;
+            highlightPossibleMoves();
         }
 
         // Load saved data and create initial board when page loads
