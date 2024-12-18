@@ -41,7 +41,6 @@ public class KnightsTour {
             Node current_node = frontier.remove(0);
             expanded_node_count++;
 
-
             //If the solution is found, print the board and create the path
             if (current_node.move == size * size) {
                 solution_found = true;
@@ -68,15 +67,7 @@ public class KnightsTour {
         }
 
     }
-    //0,0 is the lower left corner
-    private void print_board(int[][] board) {
-        for (int i = size - 1; i >= 0; i--) {
-            for (int j = 0; j < size; j++) {
-                System.out.print(board[j][i] + " ");
-            }
-            System.out.println();
-        }
-    }
+
 
     //Nodes to be added to the frontier
     private ArrayList<Node> move_selector(Node node, String search_method) {
