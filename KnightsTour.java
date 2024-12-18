@@ -1,7 +1,10 @@
 import java.util.*;
 
+
+
+
 public class KnightsTour {
-    
+    static int No_of_nodes_exp = 0;
     private int size;
     private String search_method;
     private int time_limit;
@@ -10,6 +13,7 @@ public class KnightsTour {
     public final int[] move_y = {1, 2, 2, 1, -1, -2, -2, -1};
     private boolean solution_found = false;
 
+    
     public KnightsTour(int size, String search_method, int time_limit) {
         this.size = size;
         this.search_method = search_method;
@@ -41,22 +45,26 @@ public class KnightsTour {
                 
                 long usedMemory = runtime.totalMemory() - runtime.freeMemory();
                 
-                
+                /*
+
                 if (time_taken % 100 == 0) {   
                     System.out.println(usedMemory);
                 }
 
-
-                if (usedMemory > maxMemory * 0.8) { 
+                */
+                
+                if (usedMemory > maxMemory ) { 
                     status = "Out of Memory";
                     throw new OutOfMemoryError("");
                 }
+                
+                /* 
 
                 if (time_taken % 1000 == 0) {
-                    
-
                     System.out.println("Time taken: " + time_taken / 1000.0 + " seconds");
                 }
+
+                */
                 Node current_node = frontier.remove(0);
                 if (current_node.move == size * size) {
                     solution_found = true;
@@ -111,7 +119,9 @@ public class KnightsTour {
                         int[][] new_board = deep_copy(board);
                         new_board[new_x][new_y] = move + 1;
                         Node new_node = new Node(new_x, new_y, new_board, move + 1);
+                        No_of_nodes_exp++;
                         nodes.add(new_node);
+
                     }
                 }
                 break;
@@ -124,6 +134,7 @@ public class KnightsTour {
                         int[][] new_board = deep_copy(board);
                         new_board[new_x][new_y] = move + 1;
                         Node new_node = new Node(new_x, new_y, new_board, move + 1);
+                        No_of_nodes_exp++;
                         nodes.add(new_node);
                     }
                 }
@@ -155,6 +166,7 @@ public class KnightsTour {
                     int[][] new_board = deep_copy(board);
                     new_board[move_pair[0]][move_pair[1]] = move + 1;
                     Node new_node = new Node(move_pair[0], move_pair[1], new_board, move + 1);
+                    No_of_nodes_exp++;
                     nodes.add(new_node);
                 }
                 break;
@@ -193,6 +205,7 @@ public class KnightsTour {
                     int[][] new_board = deep_copy(board);
                     new_board[move_pair[0]][move_pair[1]] = move + 1;
                     Node new_node = new Node(move_pair[0], move_pair[1], new_board, move + 1);
+                    No_of_nodes_exp++;
                     nodes.add(new_node);
                 }
                 break;
@@ -219,7 +232,6 @@ public class KnightsTour {
 
     public static void main(String[] args) {
         Scanner scanner = new Scanner(System.in);
-
         System.out.print("Enter search method (bfs/dfs/h1b/h2): ");
         String search_method = scanner.nextLine().toLowerCase();
 
@@ -229,14 +241,17 @@ public class KnightsTour {
             search_method = scanner.nextLine().toLowerCase();
         }
 
-        System.out.println("Enter chessboard size (n) : ");
+        System.out.print("Enter chessboard size (n) : ");
         int size = scanner.nextInt();
-        
+
+        /*
         System.out.println("Enter time limit ");
         int time_limit = scanner.nextInt();
+        */
 
-        KnightsTour knights_tour = new KnightsTour(size, search_method, time_limit);
+        KnightsTour knights_tour = new KnightsTour(size, search_method, 900);
         knights_tour.general_search();
+        System.out.println("Number of nodes expanded: " + No_of_nodes_exp);
     }
 
 }
