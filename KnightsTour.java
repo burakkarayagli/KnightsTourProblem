@@ -12,6 +12,7 @@ public class KnightsTour {
     public final int[] move_x = {2, 1, -1, -2, -2, -1, 1, 2};
     public final int[] move_y = {1, 2, 2, 1, -1, -2, -2, -1};
     private boolean solution_found = false;
+    private static int expanded_node_count = 0;
 
     public KnightsTour(int size, String search_method, int time_limit) {
         this.size = size;
@@ -33,14 +34,14 @@ public class KnightsTour {
         board[0][0] = 1;
         frontier.add(new Node(0, 0, board, 1));
         boolean isBFS = search_method.equals("bfs");
-        long time_taken = 0;
         //Run the search until the solution is found or the time limit is reached
         while (!frontier.isEmpty() && System.currentTimeMillis() - startTime < time_limit) {
-            time_taken = (long) (System.currentTimeMillis() - startTime);
-            if (time_taken % 1000 == 0) {
-                System.out.println("Time taken: " + time_taken / 1000.0 + " seconds");
-            }
+
+
             Node current_node = frontier.remove(0);
+            expanded_node_count++;
+
+
             //If the solution is found, print the board and create the path
             if (current_node.move == size * size) {
                 solution_found = true;
@@ -59,9 +60,11 @@ public class KnightsTour {
         long endTime = System.currentTimeMillis();
         if (!solution_found) {
             System.out.println("No solution found within the time limit.");
+            System.out.println("Expanded node count: " + expanded_node_count);
         }
         else {
             System.out.println("Time taken: " + (endTime - startTime) / 1000.0 + " seconds");
+            System.out.println("Expanded node count: " + expanded_node_count);
         }
 
     }
@@ -217,9 +220,31 @@ public class KnightsTour {
     }
 
     public static void main(String[] args) {
-        KnightsTour knights_tour = new KnightsTour(8, "h1b", 60);
-        knights_tour.general_search();
+        //Inputs: size, search_method, time_limit
+        Scanner scanner = new Scanner(System.in);
+        System.out.print("Enter the size of the board: ");
+        int size = scanner.nextInt();
+        System.out.print("Enter the search method (a,b,c,d): ");
+        String search_method = scanner.next();
+        System.out.print("Enter the time limit in seconds: ");
+        int time_limit = 900;
+        scanner.close();
+        if (search_method.equals("a")) {
+            search_method = "bfs";
+        } else if (search_method.equals("b")) {
+            search_method = "dfs";
+        } else if (search_method.equals("c")) {
+            search_method = "h1b";
+        } else if (search_method.equals("d")) {
+            search_method = "h2";
+        }
 
+        KnightsTour knights_tour = new KnightsTour(size, search_method, time_limit);
+        try {
+            knights_tour.general_search();
+        } catch (OutOfMemoryError e) {
+            System.out.println("Out of memory error");
+            System.out.println("Expanded node count: " + expanded_node_count);
+        }
     }
-
 }
