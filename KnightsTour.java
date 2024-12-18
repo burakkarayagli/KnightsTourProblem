@@ -47,6 +47,7 @@ public class KnightsTour {
                 solution_found = true;
                 create_path(current_node.board, size, "path.txt");
                 print_board(current_node.board);
+                create_board_file(current_node.board, size, "board.txt");
                 break;
             }
             //If BFS, add all the nodes to the end of the frontier
@@ -218,6 +219,23 @@ public class KnightsTour {
             e.printStackTrace();
         }
     }
+
+    private void create_board_file(int board[][], int size, String board_file) {
+        int max_value = size * size; //Maximum move count
+        int cell_width = String.valueOf(max_value).length(); //Cell width (number of digits)
+    
+        try (PrintWriter writer = new PrintWriter(new FileWriter(board_file))) {
+            for (int i = size - 1; i >= 0; i--) {
+                for (int j = 0; j < size; j++) {
+                    writer.printf("%" + (cell_width + 2) + "s", "[" + board[j][i] + "]");
+                }
+                writer.println(); // Row end
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+    
 
     public static void main(String[] args) {
         //Inputs: size, search_method, time_limit
